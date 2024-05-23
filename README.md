@@ -4,7 +4,7 @@ We present a Matlab-based enviroment, VM-ID that was used to assess the likeliho
 
 References: 
             
-            R. Schultz, T. Guillermo, C. Sebastián, & J. Grosso-Heredia (2024)
+            R. Schultz, G. Tamburini-Beliveau, S. Correa-Otto, & J. Grosso-Heredia (2024)
             Chasing the ghost of fracking in the Vaca Muerta Formation: Induced seismicity in the Neuquén Basin, Argentina
             submitted to GRL, xx, XXX.
             doi: xyz.
