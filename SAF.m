@@ -2,7 +2,7 @@ function [S]=SAF(OP,latEQ,lonEQ,tEQ,dR,dT,assoc_flag)
   % A function that performs a rudimentary spatiotemporal association.
   
   % Predefine the output structure.
-  S=struct('Ieq',[],'Ihf',[],'Is',[],'It',[],'P',[],'Ps',[],'Pt',[],'Req',[],'Twe',[],'Ns',[],'Nt',[],'N',[],'S',[]);
+  S=struct('Ieq',[],'Ihf',[],'IDhf',[],'Is',[],'It',[],'P',[],'Ps',[],'Pt',[],'Req',[],'Twe',[],'Ns',[],'Nt',[],'N',[],'S',[]);
   
   % Loop over all of the operations and find associated earthquakes.
   for i=1:length(OP)
@@ -29,7 +29,8 @@ function [S]=SAF(OP,latEQ,lonEQ,tEQ,dR,dT,assoc_flag)
       P=Pr.*Pt;
       
       % Stuff results into the output structure.
-      S(i).Ihf=OP(i).IDe;
+      S(i).Ihf=i;
+      S(i).IDhf=OP(i).IDe;
       S(i).Ieq=find(I);
       S(i).Is=find(Ir);
       S(i).It=find(It);
