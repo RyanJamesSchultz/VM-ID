@@ -1,43 +1,40 @@
-% Script that will perform the cross-correlation reshuffling analysis on
-% a list of wells and SAF-associated events.  Used to inform Section 2.3
-% and make Figures 4 & S5-S7.
+% Script that will perform the cross-correlation reshuffling analysis on the top SAF-scoring events.  
+% Used to inform Section 3.2 and make Figures 6 & S26-SS31.
 clear;
 
 % Predefine some stuff.
-dM=0.3;
-Mc=2.5;
-dR=[7.0 15.0];
-dTs=30;
-catFILE='/Users/rschultz/Desktop/VacaMuerta/data/20240314_VM_quakes_all_soruces.csv';
+Mc=2.5; dM=0.3;
+dR= [7 15]; Pr=0.95;
+dTs=[0 30]; Pt=1.00;
+decay_flag='linear'; assoc_type='unique';
+dTx=1; Nx=1e5; conf=[0.6827 0.9545 0.9973 0.9999];
+catFILE='/Users/rschultz/Desktop/VacaMuerta/data/CAT.mat';
 welFILE='/Users/rschultz/Desktop/VacaMuerta/data/INJ.mat';
-UWIs={'TPT.NQ.FP-1427(H)','TPT.NQ.FP-1316(H)','SHE.NQ.BAN-1015(H)','YPF.NQ.LACH-161(H)','TPT.NQ.FP-1425(H)','YPF.NQ.LACH-157(H)','SHE.NQ.BAN-1011(H)','VIS.NQ.BPO-2394(H)','TPT.NQ.FP-1195(H)','YPF.NQ.RDMN-229(H)','YPF.NQ.RDMN-48(H)','PLU.NQ.LCA-3086(H)'};
-%UWIs=UWIs(1);
-dTx=1;
-Nx=1e5;
-conf=[0.6827 0.9545 0.9973 0.9999];
 
-% Boundary polygons and stuff.
+% UWI list for filtering of cases.
+UWIs={'YPF.Nq.LACh-45(h)','TPT.Nq.FP-1316(h)','TPT.Nq.FP-1427(h)','YPF.Nq.LACh-385(h)','YPF.Nq.LACh-161(h)','TAU.Nq.APIg-112(h)','SHE.Nq.BAñ-1015(h)','TPT.Nq.FP-1195(h)','TPT.Nq.FP-1425(h)','YPF.Nq.AdCh-1186(h)','SHE.Nq.BAñ-1011(h)'};
+UWIs=UWIs(11);
+
+% Boundary details and for filtering.
 latB=-1;
 lonB=-1;
 depB=-1;
 tB=-1;
 mB=-1;
 
-% Get the EQ catalogue data.
-[EQlat,EQlon,EQdep,EQtime,EQmag]=parseINPRES(catFILE,latB,lonB,depB,tB,mB);
+% Load the EQ catalogue data.
+load(catFILE,'EQlat','EQlon','EQdep','EQtime','EQmag');
+[EQlat,EQlon,EQdep,EQmag,EQtime]=filtEQ(EQlat,EQlon,EQdep,EQmag,EQtime,  latB,lonB,tB,mB);
 
 % Get the HF data.
 load(welFILE,'S');
 S=filtHF(S,latB,lonB,tB);
 
 % Associate HF-EQ datasets together.
-L=SAF(S,EQlat,EQlon,EQtime,dR,dTs,'unique');
-
+L=SAF(S,EQlat,EQlon,EQtime,dR,Pr,dTs,Pt,decay_flag,assoc_type);
 
 % Filter the HF data to just the subset of wells.
 Iop=find(cellfun(@(x) ismember(x, UWIs), {S.UWI}));
-%Iop=find([L.S]>=Seq);
-%%%SORT TO BE IN THE SAME ORDER AS THE INPUT?
 S=S(Iop);
 L=L(Iop);
 
@@ -50,8 +47,8 @@ EQmag=EQmag(Ieq);
 EQtime=EQtime(Ieq);
 
 % Make time axis (volume).
-Ts=min([S.T])-days(dTs);
-Te=max([S.T])+days(dTs);
+Ts=min([S.T])-days(dTs(2));
+Te=max([S.T])+days(dTs(2));
 Tt=Ts:days(dTx):Te;
 Tc=daysdif(Ts,Tt);
 
@@ -73,17 +70,19 @@ Neq2=histcounts(Teq,           [Tc-dTx/2, Tc(end)+dTx/2]);
 
 
 
+
 %%% Plot.
 GREY=[0.85,0.85,0.85];
 PURP=[133,57,227]/256;
 
 % Timeseries and xcorr plots.
-figure(4); clf;
+figure(6); clf;
 subplot(121);
 plot(Tt,Vt,'-b'); hold on;
 bar(Tt,Neq2, 'FaceColor', GREY);
 bar(Tt,Neq1, 'FaceColor', 'r');
 xlabel('Time'); ylabel('Earthquake Counts');
+if length(UWIs)==1, title(UWIs), end
 subplot(122);
 plot(Tx,CC,'-','Color',PURP); hold on;
 plot(Tx, CC_conf(:,1),'-','Color','k');
@@ -97,16 +96,6 @@ xlim([-30 +40]);
 
 
 
-
-
-
-
-
-
-
-
-
-
 %%%% SUBROUNTINES.
 
 % Spatiotemporally filter the HF dataset.
@@ -114,7 +103,7 @@ function [S]=filtHF(S,lat_L,lon_L,T_L)
   
   % Filter spatially (lateral).
   if(lat_L~=-1)
-      I=inpolygon([S.Wlon],[S.Wlat],lon_L,lat_L);
+      I=inpolygon([S.Slon],[S.Slat],lon_L,lat_L);
       S=S(I);
   end
   
@@ -124,6 +113,41 @@ function [S]=filtHF(S,lat_L,lon_L,T_L)
       Te=arrayfun(@(S) S.T(2),S);
       I=(Te>=min(T_L))&(Ts<=max(T_L));
       S=S(I);
+  end
+  
+end
+
+% Spatiotemporally filter the EQ catalogue.
+function [lat,lon,dep,M,T]=filtEQ(lat,lon,dep,M,T,  lat_L,lon_L,T_L,M_L)
+  
+  % Filter spatially (lateral).
+  if(lat_L~=-1)
+      I=inpolygon(lon,lat,lon_L,lat_L);
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
+  end
+  
+  % Filter temporally.
+  if(length(T_L)==2)
+      I=(T>=min(T_L))&(T<=max(T_L));
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
+  end
+  
+  % Filter by magnitudes.
+  if(M_L~=-1)
+      I=(M>=min(M_L))&(M<=max(M_L));
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
   end
   
 end

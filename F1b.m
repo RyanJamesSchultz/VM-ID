@@ -7,7 +7,7 @@ Mc=2.5;
 dR=[10.0 20.0];
 dTs=30;
 Scut=1;
-catFILE='/Users/rschultz/Desktop/VacaMuerta/data/20240314_VM_quakes_all_soruces.csv';
+catFILE='/Users/rschultz/Desktop/VacaMuerta/data/CAT.mat';
 welFILE='/Users/rschultz/Desktop/VacaMuerta/data/INJ.mat';
 
 % Boundary polygons and stuff.
@@ -18,7 +18,8 @@ tB=-1;
 mB=-1;
 
 % Load the EQ catalogue data.
-[EQlat,EQlon,EQdep,EQtime,EQmag]=parseINPRES(catFILE,latB,lonB,depB,tB,mB);
+load(catFILE,'EQlat','EQlon','EQdep','EQtime','EQmag');
+[EQlat,EQlon,EQdep,EQmag,EQtime]=filtEQ(EQlat,EQlon,EQdep,EQmag,EQtime,  latB,lonB,tB,mB);
 
 % Load the HF data.
 load(welFILE,'S');
@@ -48,7 +49,7 @@ Rs=getMscale(EQmag)/10;
 Va=(max(latB)-min(latB))/(max(lonB)-min(lonB))/cosd(mean(latB));
 
 % Map.
-figure(3); clf; 
+figure(1); clf; 
 plot(Blon,Blat,'-r'); hold on;
 plot(-68.06,-38.96,'ks','MarkerFaceColor','k');
 plot([-68.818687 -68.556231 -68.851516],[-38.548934 -38.601331 -39.371536],'bs','MarkerFaceColor','b');
@@ -85,3 +86,37 @@ function [Rs]=getMscale(ML)
   Rs=nthroot((7/16)*(Mo/3e6),3); % Mo to radius (m), assuming a stress dop of 3 MPa.
 end
 
+% Spatiotemporally filter the EQ catalogue.
+function [lat,lon,dep,M,T]=filtEQ(lat,lon,dep,M,T,  lat_L,lon_L,T_L,M_L)
+  
+  % Filter spatially (lateral).
+  if(lat_L~=-1)
+      I=inpolygon(lon,lat,lon_L,lat_L);
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
+  end
+  
+  % Filter temporally.
+  if(length(T_L)==2)
+      I=(T>=min(T_L))&(T<=max(T_L));
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
+  end
+  
+  % Filter by magnitudes.
+  if(M_L~=-1)
+      I=(M>=min(M_L))&(M<=max(M_L));
+      T=T(I);
+      M=M(I);
+      lat=lat(I);
+      lon=lon(I);
+      dep=dep(I);
+  end
+  
+end
