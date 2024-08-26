@@ -1,12 +1,12 @@
 # VM-ID
 
-We present a Matlab-based enviroment, VM-ID that was used to assess the likelihood of hydraulic fracturing induced seismicity in the Neuquén Basin of Argentina.  This is a collection of codes applied in a study about the same topic [Schultz et al., 2024].
+We present a Matlab-based enviroment, VM-ID that was used to assess the likelihood of hydraulic fracturing induced seismicity in the Neuquén Basin of Argentina.  This is a collection of codes applied in a study about the same topic [Schultz et al., 2024].  See also the routines in my 'Seismology-Tools' repository.
 
 References: 
             
             R. Schultz, G. Tamburini-Beliveau, S. Correa-Otto, & J. Grosso-Heredia (2024)
             Chasing the ghost of fracking in the Vaca Muerta Formation: Induced seismicity in the Neuquén Basin, Argentina
-            submitted to GRL, xx, XXX.
+            submitted to Seismica, xx, XXX.
             doi: xyz.
             
 
